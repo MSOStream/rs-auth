@@ -36,6 +36,31 @@ macro_rules! is_logged_in {
     }};
 }
 
+#[macro_export]
+macro_rules! user_id {
+    ($req: expr) => {{
+        use jsonwebtoken::decode;
+        use jsonwebtoken::{DecodingKey, Algorithm, Validation};
+        use std::env;
+        use rs_auth::Claims;
+
+        let mut res = None;
+
+        if let Some(auth) = $req.metadata().get("auth") {
+            res = match decode::<Claims>(
+                auth.to_str().unwrap(),
+                &DecodingKey::from_secret(JWTSECRET.as_bytes()),
+                &Validation::new(Algorithm::HS256),
+            ) {
+                Ok(jwt) => Some(jwt.claims.sub),
+                Err(_) => None
+            }
+        }
+
+        res
+    }};
+}
+
 #[cfg(test)]
 mod tests {
 
