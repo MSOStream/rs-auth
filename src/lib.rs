@@ -1,3 +1,4 @@
+use chrono::{Duration, Local};
 use serde::{Deserialize, Serialize};
 #[macro_use]
 extern crate lazy_static;
@@ -9,6 +10,19 @@ pub struct Claims {
     exp: i64,
 }
 
+fn get_exp() -> i64 {
+    (Local::now() + Duration::days(1)).timestamp()
+}
+
+impl Claims {
+    pub fn new(id: String) -> Self {
+        Claims {
+            sub: id,
+            exp: get_exp(),
+        }
+    }
+}
+
 lazy_static! {
     static ref JWTSECRET: String = env::var("JWTSECRET").unwrap();
 }
@@ -17,9 +31,9 @@ lazy_static! {
 macro_rules! is_logged_in {
     ($req: expr) => {{
         use jsonwebtoken::decode;
-        use jsonwebtoken::{DecodingKey, Algorithm, Validation};
-        use std::env;
+        use jsonwebtoken::{Algorithm, DecodingKey, Validation};
         use rs_auth::Claims;
+        use std::env;
 
         let mut res = false;
 
@@ -40,9 +54,9 @@ macro_rules! is_logged_in {
 macro_rules! user_id {
     ($req: expr) => {{
         use jsonwebtoken::decode;
-        use jsonwebtoken::{DecodingKey, Algorithm, Validation};
-        use std::env;
+        use jsonwebtoken::{Algorithm, DecodingKey, Validation};
         use rs_auth::Claims;
+        use std::env;
 
         let mut res = None;
 
@@ -53,20 +67,10 @@ macro_rules! user_id {
                 &Validation::new(Algorithm::HS256),
             ) {
                 Ok(jwt) => Some(jwt.claims.sub),
-                Err(_) => None
+                Err(_) => None,
             }
         }
 
         res
     }};
-}
-
-#[cfg(test)]
-mod tests {
-
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
 }
