@@ -57,18 +57,28 @@ macro_rules! user_id {
         use jsonwebtoken::{Algorithm, DecodingKey, Validation};
         use rs_auth::Claims;
         use std::env;
+        use log::{info, warn};
 
         let mut res = None;
 
         if let Some(auth) = $req.metadata().get("authorization") {
+            info!("Authorization metadata: {:?}", auth);
             res = match decode::<Claims>(
-                auth,
+                auth.to_str().unwrap(),
                 &DecodingKey::from_secret(JWTSECRET.as_bytes()),
                 &Validation::new(Algorithm::HS256),
             ) {
-                Ok(jwt) => Some(jwt.claims.sub),
-                Err(_) => None,
+                Ok(jwt) => {
+                    info!("Valid jwt: {:?}", jwt);
+                    Some(jwt.claims.sub)
+                },
+                Err(e) => {
+                    warn!("{:?}", e);
+                    None
+                },
             }
+        } else {
+            println!("Authorization metadata not present");
         }
 
         res
