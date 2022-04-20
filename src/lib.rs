@@ -60,7 +60,7 @@ macro_rules! user_id {
 
         let mut res = None;
 
-        if let Some(auth) = $req.metadata().get("auth") {
+        if let Some(auth) = $req.metadata().get("authorization") {
             res = match decode::<Claims>(
                 auth.to_str().unwrap(),
                 &DecodingKey::from_secret(JWTSECRET.as_bytes()),
